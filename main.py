@@ -1,5 +1,5 @@
 import csv
-from typing import Optional
+from typing import Optional, List
 
 from selenium import webdriver
 
@@ -12,6 +12,9 @@ class SpendCrawler:
         self.csvfile = open(f'{csv_filename}', 'w', newline='', encoding='utf-8')
         self.writer = csv.DictWriter(self.csvfile, fieldnames=field_names)
         self.writer.writeheader()
+    
+    def write_to_csv(self, data: List[dict]):
+        self.writer.writerows(data)
 
     def get_csv_filename(self, csv_filename: Optional[str]) -> str:
         '''
