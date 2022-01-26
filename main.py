@@ -29,3 +29,7 @@ class SpendCrawler:
                 return f'{csv_filename}.csv'
         else:
             return 'spend.csv'
+    
+    def __del__(self):
+        self.driver.close()
+        self.csvfile.close()
