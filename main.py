@@ -1,22 +1,29 @@
 import csv
-from typing import Optional, List
+from abc import ABC
+from typing import Optional, List, Type
 
-from selenium import webdriver
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver import Chrome
 
 
-class SpendCrawler:
-    def __init__(self, csv_filename: str = None) -> None:
-        csv_filename = self.get_csv_filename(csv_filename=csv_filename)
-        self.driver: webdriver.Chrome = webdriver.Chrome()
-        field_names = ['Team', 'Forwards', 'Defense', 'Goalies', 'Injuries', 'Cap Hit']
-        self.csvfile = open(f'{csv_filename}', 'w', newline='', encoding='utf-8')
-        self.writer = csv.DictWriter(self.csvfile, fieldnames=field_names)
-        self.writer.writeheader()
+class BaseCrawler(ABC):
+    csv_headers: List[str]
+    webdriver_class: Type[WebDriver]
     
-    def write_to_csv(self, data: List[dict]):
-        self.writer.writerows(data)
+    def __init__(self, csv_filename: str = None):
+        csv_filename = self._get_csv_filename(csv_filename=csv_filename)
+        self._driver = self.webdriver_class()
+        self._csvfile = open(f'{csv_filename}', 'w', newline='', encoding='utf-8')
+        self._writer = csv.DictWriter(self._csvfile, fieldnames=self.csv_headers)
+        self._writer.writeheader()
+    
+    def _write_rows_list_to_csv(self, data: List[dict]):
+        self._writer.writerows(data)
+    
+    def _write_row_dict_to_csv(self, data: dict):
+        self._writer.writerow(data)
 
-    def get_csv_filename(self, csv_filename: Optional[str]) -> str:
+    def _get_csv_filename(self, csv_filename: Optional[str]) -> str:
         '''
         If a csv_filename is provided, return it. Otherwise, return 'spend.csv'.
         
@@ -31,8 +38,13 @@ class SpendCrawler:
             else:
                 return f'{csv_filename}.csv'
         else:
-            return 'spend.csv'
-    
+            return f'{self.__class__.__name__.lower()}.csv'
+
     def __del__(self):
-        self.driver.close()
-        self.csvfile.close()
+        self._driver.close()
+        self._csvfile.close()
+
+
+class SpendCrawler(BaseCrawler):
+    csv_headers = ['Team', 'Forwards', 'Defense', 'Goalies', 'Injuries', 'Cap Hit']
+    webdriver_class = Chrome
