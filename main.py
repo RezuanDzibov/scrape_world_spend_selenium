@@ -3,7 +3,9 @@ from abc import ABC
 from typing import Optional, List, Type
 
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver import Chrome
+from selenium.webdriver.common.by import By
 
 
 class BaseCrawler(ABC):
@@ -48,3 +50,22 @@ class BaseCrawler(ABC):
 class SpendCrawler(BaseCrawler):
     csv_headers = ['Team', 'Forwards', 'Defense', 'Goalies', 'Injuries', 'Cap Hit']
     webdriver_class = Chrome
+    URI = 'https://scrape.world/spend'
+
+    def _get_rows(self) -> List[WebElement]:
+        row_table = self._driver.find_element(By.XPATH, '/html/body/div/div/div[2]/table/tbody')
+        table_rows = row_table.find_elements(By.XPATH, './/tr')
+        return table_rows
+
+    def _get_row_dict(self, webelement: WebElement) -> dict:
+        row_dict: dict = dict()
+        for header_name in self.csv_headers:
+            row_dict[header_name] = webelement.find_element(By.XPATH, f".//td[contains(@data-label,'{header_name.upper()}')]").text
+        return row_dict
+
+    def scrap(self):
+        self._driver.get(self.URI)
+        rows = self._get_rows()
+        for row in rows:
+            row_dict = self._get_row_dict(webelement=row)
+            self._write_row_dict_to_csv(data=row_dict)
